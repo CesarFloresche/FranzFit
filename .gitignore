@@ -11,6 +11,19 @@
 npm-debug.log
 yarn-error.log
 
+# Environment configuration and local credentials
+.env
+.env.*
+!.env.example
+
+# Local database exports and logs
+/database/dumps/
+*.sql
+!database/schema.sql
+*.sql.gz
+*.dump
+*.log
+
 # IDEs and editors
 .idea/
 .project

@@ -4,9 +4,12 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "api": "node backend/server.cjs",
+    "start:prod": "npm run build && node backend/server.cjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:api": "node --test backend/test/*.test.cjs"
   },
   "private": true,
   "packageManager": "npm@11.19.1",
@@ -17,6 +20,9 @@
     "@angular/forms": "^22.2.0",
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "mysql2": "^3.24.6",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

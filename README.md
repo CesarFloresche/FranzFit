@@ -1,59 +1,155 @@
-# ProyedctoPrograMultiMedia
+# FranzFit
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.0.
+FranzFit es una aplicación web para organizar rutinas de gimnasio y calistenia. Incluye una guía visual de ejercicios, temporizador de entrenamiento, reproductor de YouTube y un chatbot de entrenamiento con IA local.
 
-## Development server
+El proyecto separa el **frontend Angular** del **backend Express**. El backend conversa con **Ollama usando Gemma 3** y guarda las conversaciones en **MySQL/MariaDB de XAMPP**.
 
-To start a local development server, run:
+## Funciones
 
-```bash
-ng serve
+- Rutinas de ejemplo para gimnasio y calistenia.
+- Visualización biomecánica animada en Canvas.
+- Temporizador para la sesión y los descansos.
+- Chatbot en español con historial persistido en MySQL.
+- Reproductor de YouTube que acepta enlaces normales, cortos y `/shorts/`.
+
+## Arquitectura
+
+| Capa | Tecnología | Responsabilidad |
+| --- | --- | --- |
+| Frontend | Angular standalone, TypeScript y Signals | Interfaz, rutinas, temporizador, Canvas y chat |
+| Backend | Node.js y Express | API, validación de mensajes e integración con Ollama/MySQL |
+| IA local | Ollama y Gemma 3 | Respuestas del entrenador virtual |
+| Base de datos | MySQL/MariaDB de XAMPP | Conversaciones y mensajes del chatbot |
+
+Rutas principales de la API:
+
+- `GET /api/health`: comprueba la conexión del backend con MySQL.
+- `POST /api/chat`: envía `{ "message": "...", "conversationId": "..." }` y devuelve la respuesta de Gemma 3. `conversationId` es opcional al iniciar una conversación.
+
+## Requisitos
+
+- Node.js 22 o superior y npm.
+- XAMPP con MySQL iniciado.
+- Ollama instalado en el mismo equipo que ejecuta el backend.
+- Modelo Gemma 3 descargado.
+
+## Instalación en Windows
+
+1. Clona el repositorio y entra a su carpeta:
+
+   ```powershell
+   git clone https://github.com/CesarFloresche/FranzFit.git
+   cd FranzFit
+   ```
+
+2. Instala las dependencias y crea tu configuración local:
+
+   ```powershell
+   npm ci
+   Copy-Item .env.example .env
+   ```
+
+3. Edita `.env` en tu equipo. Para XAMPP local, los valores iniciales suelen funcionar; configura `MYSQL_PASSWORD` si tu usuario MySQL tiene contraseña. **No publiques ni compartas el archivo `.env`.**
+
+   | Variable | Uso | Valor local predeterminado |
+   | --- | --- | --- |
+   | `PORT` | Puerto de la API | `3000` |
+   | `MYSQL_HOST` | Host de MySQL | `127.0.0.1` |
+   | `MYSQL_PORT` | Puerto de MySQL | `3306` |
+   | `MYSQL_USER` | Usuario MySQL | `root` |
+   | `MYSQL_PASSWORD` | Contraseña local de MySQL | Vacía |
+   | `MYSQL_DATABASE` | Base de datos | `franzfit` |
+   | `OLLAMA_BASE_URL` | Dirección local de Ollama | `http://127.0.0.1:11434` |
+   | `OLLAMA_MODEL` | Modelo instalado en Ollama | `gemma3:latest` |
+
+4. Abre XAMPP, inicia **MySQL** y, desde phpMyAdmin, importa [`database/schema.sql`](./database/schema.sql). El script crea la base `franzfit` y las tablas `conversations` y `chat_messages`.
+5. Descarga Gemma 3 si aún no está instalado:
+
+   ```powershell
+   ollama pull gemma3
+   ```
+
+   Asegúrate de que Ollama esté ejecutándose localmente.
+6. Inicia el backend en una terminal:
+
+   ```powershell
+   npm run api
+   ```
+
+7. En otra terminal inicia Angular:
+
+   ```powershell
+   npm start
+   ```
+
+8. Abre <http://localhost:4200>. Angular reenvía `/api` al backend local. Puedes comprobar la conexión a MySQL en <http://localhost:3000/api/health>.
+
+Para compilar Angular y servir el frontend y la API desde el backend:
+
+```powershell
+npm run start:prod
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+En un despliegue público configura HTTPS y credenciales propias. No expongas directamente MySQL, phpMyAdmin ni el puerto local de Ollama a Internet.
 
-## Code scaffolding
+## YouTube
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+El reproductor inicia con [Syn Cole — Feel Good (NCS)](https://www.youtube.com/watch?v=q1ULJ92aldE), cuyo enlace de YouTube ofrece el reproductor incrustado oficial. También puedes reemplazarlo pegando otro enlace.
 
-```bash
-ng generate component component-name
+La inserción permitida no garantiza reproducción en todos los equipos: YouTube, el propietario del video, la región o los códecs disponibles en el navegador pueden impedirla. La aplicación muestra el error recibido y ofrece abrir el video directamente en YouTube; no intenta evadir esas restricciones.
+
+## Pruebas
+
+```powershell
+npm run build
+npm test -- --watch=false
+npm run test:api
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Las pruebas de API usan dobles de MySQL y Ollama y no necesitan contraseñas reales, XAMPP activo ni un modelo cargado.
 
-```bash
-ng generate --help
+## Git, `.gitignore` y credenciales
+
+El `.gitignore` excluye `.env` y los demás `.env.*`, respaldos SQL, `node_modules`, compilaciones y registros. La excepción `.env.example` sí se versiona porque contiene únicamente nombres de variables y valores de ejemplo; [`database/schema.sql`](./database/schema.sql) también se versiona porque es el esquema de instalación, no un respaldo con datos.
+
+Antes de subir cambios, desde la raíz del proyecto:
+
+```powershell
+git status --short
+git check-ignore -v .env
+git ls-files .env
 ```
 
-## Building
+`git check-ignore` debe indicar que `.env` está ignorado y `git ls-files .env` no debe mostrar archivos. Si un `.env` ya se agregó al índice por error, quítalo del seguimiento sin borrarlo de tu equipo:
 
-To build the project run:
-
-```bash
-ng build
+```powershell
+git rm --cached .env
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Si una contraseña ya llegó a GitHub, ignorar el archivo no la borra del historial: cambia/rota esa contraseña y limpia el historial antes de publicar.
 
-## Running unit tests
+### Subir al repositorio de GitHub
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+El repositorio de la captura es `https://github.com/CesarFloresche/FranzFit`. Primero revisa `git status --short` y confirma que no aparezcan `.env` ni respaldos. Luego:
 
-```bash
-ng test
+```powershell
+git add .
+git status --short
+git commit -m "Add FranzFit frontend, API and AI coach"
+git branch -M main
+git remote -v
 ```
 
-## Running end-to-end tests
+Si `git remote -v` no muestra `origin`, agrégalo:
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
+```powershell
+git remote add origin https://github.com/CesarFloresche/FranzFit.git
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Si `origin` ya apunta a otro repositorio, verifica la URL antes de cambiarla. Finalmente, para el repositorio vacío mostrado en la captura:
 
-## Additional Resources
+```powershell
+git push -u origin main
+```
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+GitHub solicitará autenticación por el método configurado en tu equipo. No pongas contraseñas ni tokens dentro de la URL, el código, el README o los comandos guardados en el repositorio.
